@@ -1,0 +1,75 @@
+sudo apt install tree
+tree
+tree /
+tree / - L 1
+tree - L 1 /
+pwd
+sudo apt clean
+sudo apt update
+sudo dpkg --configure -a
+sudo apt install -f
+sudo apt dist-upgrade
+sudo apt autoremove --purge
+amdgpu
+sudo apt install synaptic
+sudo apt install chezmoi
+sh -c "$(curl -fsLS get.chezmoi.io)"
+chezmoi init
+sudo apt install chezmoi
+apt install chezmoi
+~/bin/chezmoi
+chezmoi init
+~/bin/chezmoi upgrade
+~/bin/chezmoi --cache path
+chezmoi init
+cd bin
+chezmoi init
+git remote add origin git@github.com:$GITHUB_USERNAME/dotfiles.git
+git branch -M main
+git push -u origin main
+git remote add origin git@github.com:$mjbeatty89/dotfiles.git
+git branch -M main
+git push -u origin main
+git remote add origin git@github.com:$mjbeatty89/dotfiles.git
+git branch -M main
+git push -u origin main
+git remote add origin git@github.com:$mjbeatty89/dotfiles.git
+git remote remove origin git@github.com:/dotfiles.git
+git remote remove git@github.com:/dotfiles.git
+git remote \github.com:/dotfiles.git
+git remote
+git remoate origin
+git remote origin
+git remote -v
+git remote rename git@github.com:/dotfiles.git git@github.com/mjbeatty89/dotfiles.git
+git remote rename github.com:/dotfiles.git github.com/mjbeatty89/dotfiles.git
+git remote -v show
+git remote get-url --all
+git remote add origin https://github.com/mjbeatty89/dotfiles.git
+git branch -M main
+git push -u origin main
+git remove origin
+git remote remove -v
+git remote -v remove
+git remote remove $GITHUB_USERNAME
+git remote remove GITHUB_USERNAME
+git remote remove --all
+git remote remove git@github.com:$GITHUB_USERNAME/dotfiles.git
+git remote remove git@github.com:/dotfiles.git
+git remote remove /dotfiles.git
+git remote name
+git remote -v name
+git remote -v
+git remote remove origin  git@github.com:/dotfiles.git
+git remote remove origin
+git remote add origin https://github.com/mjbeatty89/dotfiles.git
+git branch -M main
+git push -u origin main
+git remote -v
+git branch -M main
+git push -u origin main
+exit
+git push -u origin main
+chezmoi -help
+-help
+exit

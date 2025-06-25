@@ -1,0 +1,166 @@
+# .zshrc - Optimized Zsh Configuration
+
+# =============================================================================
+# ENVIRONMENT VARIABLES
+# =============================================================================
+
+# Zsh directory
+export ZDOTDIR="$HOME"
+
+# XDG Base Directory Specification
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_STATE_HOME="$HOME/.local/state"
+export XDG_DATA_DIRS="/usr/local/share:/usr/share"
+export XDG_CONFIG_DIRS="/etc/xdg"
+
+# Homebrew
+export HB="/home/linuxbrew/.linuxbrew/"
+
+# Plugin directory
+export ZPLUGINDIR="${ZDOTDIR:-$HOME/.config/zsh}/plugins"
+
+# =============================================================================
+# PATH CONFIGURATION
+# =============================================================================
+
+# Add custom paths
+path=(
+    "$HOME/.local/bin"
+    "$HOME/dotfiles"
+    "$HOME/bin"
+    "$HOME/.x-cmd.root/bin"
+    "$HOME/.spicetify"
+    "$HOME/"
+    "$HB"
+    $path
+)
+export PATH
+
+# =============================================================================
+# PLUGIN MANAGEMENT FUNCTIONS
+# =============================================================================
+
+# Clone a plugin, identify its init file, source it, and add it to your fpath
+function plugin-load {
+  local repo plugdir initfile initfiles=()
+  for repo in $@; do
+    plugdir=$ZPLUGINDIR/${repo:t}
+    initfile=$plugdir/${repo:t}.plugin.zsh
+    if [[ ! -d $plugdir ]]; then
+      echo "Cloning $repo..."
+      git clone -q --depth 1 --recursive --shallow-submodules \
+        https://github.com/$repo $plugdir
+    fi
+    if [[ ! -e $initfile ]]; then
+      initfiles=($plugdir/*.{plugin.zsh,zsh-theme,zsh,sh}(N))
+      (( $#initfiles )) || { echo >&2 "No init file found '$repo'." && continue }
+      ln -sf $initfiles[1] $initfile
+    fi
+    fpath+=$plugdir
+    (( $+functions[zsh-defer] )) && zsh-defer . $initfile || . $initfile
+  done
+}
+
+# Update all plugins
+function plugin-update {
+  ZPLUGINDIR=${ZPLUGINDIR:-$HOME/.config/zsh/plugins}
+  for d in $ZPLUGINDIR/*/.git(/); do
+    echo "Updating ${d:h:t}..."
+    command git -C "${d:h}" pull --ff --recurse-submodules --depth 1 --rebase --autostash
+  done
+}
+
+# =============================================================================
+# ZSH CONFIGURATION
+# =============================================================================
+
+# Initialize completion system early
+autoload -Uz compinit
+compinit
+
+# Set shell options
+setopt glob_dots  # glob matches files starting with dot
+
+# =============================================================================
+# PLUGIN LOADING
+# =============================================================================
+
+plugins=(
+  # Load essential plugins first
+  romkatv/zsh-defer
+
+  # Core functionality plugins
+  mattmc3/zman                        # Man page completions
+  agkozak/zsh-z                       # Directory jumping
+  peterhurford/up.zsh                 # Cd to parent directories (ie. up 3)
+  marlonrichert/zsh-hist              # Better history management
+  reegnz/jq-zsh-plugin                # Interactive jq queries (Requires jq and fzf)
+  MichaelAquilina/zsh-you-should-use  # Recommends aliases when typed
+
+  # UI and styling plugins
+  p1r473/zsh-color-logging
+  ael-code/zsh-colored-man-pages
+  Freed-Wu/zsh-colorize-functions
+  zpm-zsh/colorize
+  zpm-zsh/colors
+
+  # Development tools
+  valentinocossar/sublime
+  apalkk/Cmaker
+  saravanabalagi/zsh-plugin-condaenv
+  happycod3r/fzf-tools
+  unixorn/prettyping
+  brunomacedo/zsh-auto-pnpm-use
+
+  # Completions
+  zsh-users/zsh-completions
+  sudosubin/zsh-github-cli
+  zpm-zsh/ssh
+  frosit/zsh-plugin-homeassistant-cli
+
+  # Productivity plugins
+  olets/zsh-abbr
+  givensuman/zsh-allclear
+  zdharma-continuum/zsnapshot
+  Licheam/zsh-ask
+  paraqles/zsh-plugin-ssh
+
+  # Syntax highlighting and suggestions (load near end)
+  # zdharma-continuum/fast-syntax-highlighting
+  zsh-users/zsh-history-substring-search
+  zsh-users/zsh-autosuggestions
+
+  # Prompt theme (load last)
+  romkatv/powerlevel10k
+)
+
+plugin-load $plugins
+
+# =============================================================================
+# EXTERNAL INTEGRATIONS
+# =============================================================================
+
+# Atuin - Better shell history
+if [[ -f "$HOME/.atuin/bin/env" ]]; then
+    . "$HOME/.atuin/bin/env"
+    eval "$(atuin init zsh)"
+fi
+
+# Google Cloud SDK
+if [[ -f '/home/mjb/Downloads/google-cloud-sdk/path.zsh.inc' ]]; then
+    . '/home/mjb/Downloads/google-cloud-sdk/path.zsh.inc'
+fi
+if [[ -f '/home/mjb/Downloads/google-cloud-sdk/completion.zsh.inc' ]]; then
+    . '/home/mjb/Downloads/google-cloud-sdk/completion.zsh.inc'
+fi
+
+# =============================================================================
+# PROMPT CONFIGURATION
+# =============================================================================
+
+# Powerlevel10k instant prompt configuration
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+[ ! -f "$HOME/.x-cmd.root/X" ] || . "$HOME/.x-cmd.root/X" # boot up x-cmd.
