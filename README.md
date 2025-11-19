@@ -2,10 +2,12 @@
 
 Personal dotfiles for ZSH, Git, Starship, and various development tools.
 
+**Multi-OS Support:** macOS, Linux, and Windows (WSL)
+
 ## 🖥️ Systems
 - **Primary:** M4 Mac Mini (mmm4) - macOS
-- Windows Laptop
 - Linux Desktop
+- Windows Laptop (WSL)
 - Various servers and Raspberry Pis
 
 ## 🚀 Quick Start
@@ -85,6 +87,28 @@ hostname -s  # Find your hostname
 touch ~/dotfiles/zsh/machines/<hostname>.zsh
 ```
 
+## 🔀 OS-Specific Features
+
+The configuration automatically detects your OS and adjusts:
+
+**macOS:**
+- Homebrew package manager (`brewup`, `brewclean`)
+- macOS-specific paths (LM Studio, etc.)
+- 1Password CLI plugin integration
+- `localip` shows WiFi IP address
+
+**Linux:**
+- APT/DNF/Pacman package managers auto-detected
+- Linux-specific paths (`~/.local/bin`)
+- `localip` shows first network interface IP
+- Compatible with Ubuntu, Fedora, Arch, etc.
+
+**Package Manager Aliases:**
+- macOS: `brewup`, `brewclean`
+- Ubuntu/Debian: `aptup`, `aptclean`
+- Fedora/RHEL: `dnfup`
+- Arch: `pacup`, `pacclean`
+
 ## 🔄 Keeping Things Updated
 
 ### Update Dotfiles from Repo
@@ -94,16 +118,18 @@ git pull
 ```
 
 ### Update Repo with Local Changes
+
+**Easy way (recommended):**
+```bash
+dotfiles-update  # Automatically commits and pushes your changes
+```
+
+**Manual way:**
 ```bash
 cd ~/dotfiles
 git add .
 git commit -m "Update configs from $(hostname)"
 git push
-```
-
-Or use the helper function:
-```bash
-dotfiles-update  # Add this to your .zshrc.secrets if you want it
 ```
 
 ### Update Installed Packages

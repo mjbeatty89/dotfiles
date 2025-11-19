@@ -1,14 +1,40 @@
 # ============================================================================
-# ZSH Configuration for M4 Mac Mini
+# ZSH Configuration - Multi-OS Support
 # Matthew Beatty - mjbeatty89@gmail.com
 # ============================================================================
+
+# ============================================================================
+# OS Detection
+# ============================================================================
+case "$(uname -s)" in
+    Darwin*)
+        export OS_TYPE="mac"
+        ;;
+    Linux*)
+        export OS_TYPE="linux"
+        ;;
+    CYGWIN*|MINGW*|MSYS*)
+        export OS_TYPE="windows"
+        ;;
+    *)
+        export OS_TYPE="unknown"
+        ;;
+esac
 
 # ============================================================================
 # PATH Configuration
 # ============================================================================
 
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/mjb/.lmstudio/bin"
+# OS-specific PATH additions
+if [ "$OS_TYPE" = "mac" ]; then
+    # LM Studio CLI (macOS only)
+    [ -d "$HOME/.lmstudio/bin" ] && export PATH="$PATH:$HOME/.lmstudio/bin"
+fi
+
+if [ "$OS_TYPE" = "linux" ]; then
+    # Add common Linux paths
+    [ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"
+fi
 
 # ============================================================================
 # API Keys and Secrets
@@ -70,9 +96,19 @@ zstyle ':completion:*:match:*' original only
 zstyle ':completion:*:approximate:*' max-errors 1 numeric
 
 # ============================================================================
-# ZSH Autocomplete (from Homebrew)
+# ZSH Autocomplete
 # ============================================================================
-source /opt/homebrew/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh
+# Load zsh-autocomplete from OS-specific location
+if [ "$OS_TYPE" = "mac" ] && [ -f "/opt/homebrew/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh" ]; then
+    source /opt/homebrew/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh
+elif [ "$OS_TYPE" = "linux" ]; then
+    # Try common Linux locations
+    if [ -f "/usr/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh" ]; then
+        source /usr/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh
+    elif [ -f "$HOME/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh" ]; then
+        source $HOME/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh
+    fi
+fi
 
 # Configure zsh-autocomplete
 zstyle ':autocomplete:*' min-input 2
@@ -184,8 +220,13 @@ alias venv='python3 -m venv'
 # Make
 alias m='make'
 
-# VSCode
-alias code='/Applications/Visual\\ Studio\\ Code.app/Contents/Resources/app/bin/code'
+# VSCode (OS-specific)
+if [ "$OS_TYPE" = "mac" ]; then
+    alias code='/Applications/Visual\\ Studio\\ Code.app/Contents/Resources/app/bin/code'
+elif [ "$OS_TYPE" = "linux" ]; then
+    # Linux - usually already in PATH
+    command -v code &>/dev/null || alias code='code'
+fi
 
 # Quick directory navigation
 alias ..='cd ..'
@@ -198,15 +239,49 @@ alias ....='cd ../../..'
 
 # Network
 alias myip='curl ifconfig.me'
-alias localip='ipconfig getifaddr en0'
+
+# Local IP (OS-specific)
+if [ "$OS_TYPE" = "mac" ]; then
+    alias localip='ipconfig getifaddr en0'
+elif [ "$OS_TYPE" = "linux" ]; then
+    alias localip="hostname -I | awk '{print \$1}'"
+fi
+
 alias ports='lsof -i -P | grep LISTEN'
 
-# System
-alias cpu='top -o cpu'
-alias mem='top -o mem'
+# System monitoring (OS-specific)
+if [ "$OS_TYPE" = "mac" ]; then
+    alias cpu='top -o cpu'
+    alias mem='top -o mem'
+elif [ "$OS_TYPE" = "linux" ]; then
+    alias cpu='top -o %CPU'
+    alias mem='top -o %MEM'
+fi
 
-# Homebrew
-alias brewup='brew update && brew upgrade && brew cleanup'
+# ============================================================================
+# Package Manager Aliases
+# ============================================================================
+
+if [ "$OS_TYPE" = "mac" ]; then
+    # Homebrew
+    alias brewup='brew update && brew upgrade && brew cleanup'
+    alias brewclean='brew cleanup && brew autoremove'
+elif [ "$OS_TYPE" = "linux" ]; then
+    # APT (Debian/Ubuntu)
+    if command -v apt &>/dev/null; then
+        alias aptup='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y'
+        alias aptclean='sudo apt autoremove -y && sudo apt autoclean'
+    fi
+    # DNF (Fedora/RHEL)
+    if command -v dnf &>/dev/null; then
+        alias dnfup='sudo dnf update -y && sudo dnf autoremove -y'
+    fi
+    # Pacman (Arch)
+    if command -v pacman &>/dev/null; then
+        alias pacup='sudo pacman -Syu'
+        alias pacclean='sudo pacman -Sc'
+    fi
+fi
 
 # ============================================================================
 # QMK Keyboard Development
@@ -281,9 +356,33 @@ if [ -f "$MACHINE_CONFIG" ]; then
 fi
 
 # ============================================================================
+# 1Password CLI Plugin (Mac)
+# ============================================================================
+if [ "$OS_TYPE" = "mac" ] && [ -f "$HOME/.config/op/plugins.sh" ]; then
+    source $HOME/.config/op/plugins.sh
+fi
+
+# ============================================================================
+# Dotfiles Auto-Update Function
+# ============================================================================
+dotfiles-update() {
+    echo "📦 Updating dotfiles..."
+    cd $HOME/dotfiles || return 1
+    git add -A
+    git commit -m "Update dotfiles from $(hostname) - $(date '+%Y-%m-%d %H:%M:%S')"
+    git push
+    echo "✅ Dotfiles updated and pushed to GitHub!"
+    cd - > /dev/null
+}
+
+# ============================================================================
 # Welcome Message
 # ============================================================================
-echo "🚀 M4 Mac Mini - Welcome back, Matthew!"
+if [ "$OS_TYPE" = "mac" ]; then
+    echo "🍎 macOS ($(hostname -s)) - Welcome back, Matthew!"
+elif [ "$OS_TYPE" = "linux" ]; then
+    echo "🐧 Linux ($(hostname -s)) - Welcome back, Matthew!"
+else
+    echo "💻 $(hostname -s) - Welcome back, Matthew!"
+fi
 echo "💡 Tip: Use 'fuck' or 'fk' to correct the last command"
-
-source /Users/mjb/.config/op/plugins.sh
