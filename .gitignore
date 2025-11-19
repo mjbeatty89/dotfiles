@@ -1,0 +1,30 @@
+# Dotfiles Repository .gitignore
+# Copy this to ~/dotfiles/.gitignore when you create your dotfiles repo
+
+# Secrets and API keys - NEVER commit these!
+.zshrc.secrets
+*.secrets
+.env
+.env.local
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Backup files
+*.backup
+*.backup.*
+*~
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# SSH keys (just in case)
+.ssh/id_*
+.ssh/*.pem
+
+# GPG keys
+.gnupg/

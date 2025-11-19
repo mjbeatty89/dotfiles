@@ -1,0 +1,111 @@
+# ============================================================================
+# Starship Prompt Configuration
+# Matthew Beatty - M4 Mac Mini
+# ============================================================================
+
+format = """
+[┌─](#9d4edd)$username$hostname$directory$git_branch$git_status$python$nodejs$rust$golang$docker_context
+[└─>](#9d4edd) """
+
+# Timeout for starship to execute (milliseconds)
+command_timeout = 1000
+
+# Add a newline before the prompt
+add_newline = true
+
+[username]
+style_user = "bold #3a86ff"
+style_root = "bold red"
+format = "[$user]($style) "
+show_always = false
+
+[hostname]
+ssh_only = false
+format = "on [$hostname]($style) "
+style = "bold #06d6a0"
+disabled = false
+
+[directory]
+truncation_length = 3
+truncate_to_repo = true
+format = "in [$path]($style)[$read_only]($read_only_style) "
+style = "bold #ffbe0b"
+read_only = " 🔒"
+read_only_style = "red"
+
+[directory.substitutions]
+"Documents" = "📄 "
+"Downloads" = "⬇️ "
+"Music" = "🎵 "
+"Pictures" = "📷 "
+"Desktop" = "🖥️ "
+
+[git_branch]
+symbol = "🌱 "
+format = "on [$symbol$branch]($style) "
+style = "bold #06d6a0"
+
+[git_status]
+format = '([\[$all_status$ahead_behind\]]($style) )'
+style = "bold red"
+conflicted = "🏳"
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+untracked = "?"
+stashed = "$"
+modified = "!"
+staged = '[++($count)](green)'
+renamed = "»"
+deleted = "✘"
+
+[python]
+symbol = "🐍 "
+format = 'via [${symbol}${pyenv_prefix}(${version} )(\($virtualenv\) )]($style)'
+style = "bold yellow"
+pyenv_version_name = false
+
+[nodejs]
+symbol = "⬢ "
+format = "via [$symbol($version )]($style)"
+style = "bold green"
+
+[rust]
+symbol = "🦀 "
+format = "via [$symbol($version )]($style)"
+style = "bold red"
+
+[golang]
+symbol = "🐹 "
+format = "via [$symbol($version )]($style)"
+style = "bold cyan"
+
+[docker_context]
+symbol = "🐳 "
+format = "via [$symbol$context]($style) "
+style = "bold blue"
+only_with_files = true
+
+[cmd_duration]
+min_time = 500
+format = "took [$duration]($style) "
+style = "bold yellow"
+
+[time]
+disabled = false
+format = '🕙[\[ $time \]]($style) '
+time_format = "%T"
+style = "bold blue"
+
+[battery]
+full_symbol = "🔋"
+charging_symbol = "⚡️"
+discharging_symbol = "💀"
+
+[[battery.display]]
+threshold = 30
+style = "bold red"
+
+[character]
+success_symbol = "[➜](bold green)"
+error_symbol = "[✗](bold red)"
