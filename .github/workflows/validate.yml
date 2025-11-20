@@ -1,0 +1,114 @@
+# ============================================================================
+# GitHub Actions Workflow: Validate Dotfiles
+# ============================================================================
+# This runs automatically every time you push to GitHub
+# It checks that your dotfiles are valid and safe
+
+name: Validate Dotfiles
+
+# WHEN to run this workflow
+on:
+  push:                    # Run when you push commits
+    branches: [ main ]     # Only on main branch
+  pull_request:            # Also run on pull requests
+    branches: [ main ]
+  workflow_dispatch:       # Allow manual trigger from GitHub UI
+
+# WHAT to run
+jobs:
+  # Job 1: Test on Linux
+  test-linux:
+    name: Test on Ubuntu Linux
+    runs-on: ubuntu-latest    # Free GitHub VM with Ubuntu
+    
+    steps:
+      # Step 1: Download your repo
+      - name: Checkout dotfiles
+        uses: actions/checkout@v4
+      
+      # Step 2: Check ZSH syntax
+      - name: Validate ZSH syntax
+        run: |
+          echo "🔍 Checking ZSH files for syntax errors..."
+          zsh -n zsh/.zshrc
+          zsh -n zsh/.zprofile
+          zsh -n zsh/machines/*.zsh
+          echo "✅ ZSH syntax is valid!"
+      
+      # Step 3: Check for secrets accidentally committed
+      - name: Check for leaked secrets
+        run: |
+          echo "🔒 Checking for accidentally committed secrets..."
+          if grep -r "AIza\|sk-\|ghp_\|github_pat_" . --exclude-dir=.git --exclude-dir=.github; then
+            echo "❌ Found potential API keys in files!"
+            exit 1
+          fi
+          echo "✅ No secrets found!"
+      
+      # Step 4: Verify important files exist
+      - name: Verify required files
+        run: |
+          echo "📋 Checking required files exist..."
+          test -f zsh/.zshrc || { echo "❌ .zshrc missing!"; exit 1; }
+          test -f git/.gitconfig || { echo "❌ .gitconfig missing!"; exit 1; }
+          test -f starship/starship.toml || { echo "❌ starship.toml missing!"; exit 1; }
+          test -f install.sh || { echo "❌ install.sh missing!"; exit 1; }
+          test -x install.sh || { echo "❌ install.sh not executable!"; exit 1; }
+          echo "✅ All required files present!"
+      
+      # Step 5: Check .gitignore is protecting secrets
+      - name: Verify gitignore protects secrets
+        run: |
+          echo "🛡️  Verifying .gitignore protects secrets..."
+          grep -q ".zshrc.secrets" .gitignore || { echo "❌ .gitignore doesn't protect .zshrc.secrets!"; exit 1; }
+          echo "✅ Secrets are protected!"
+      
+      # Step 6: Test OS detection
+      - name: Test OS detection
+        run: |
+          echo "🖥️  Testing OS detection logic..."
+          source zsh/.zshrc
+          if [ "$OS_TYPE" != "linux" ]; then
+            echo "❌ OS detection failed! Expected 'linux', got '$OS_TYPE'"
+            exit 1
+          fi
+          echo "✅ OS detected correctly as: $OS_TYPE"
+      
+      # Step 7: Dry-run install script (don't actually symlink)
+      - name: Test install script
+        run: |
+          echo "🔧 Testing install script structure..."
+          bash -n install.sh
+          echo "✅ Install script syntax is valid!"
+
+  # Job 2: Test on macOS
+  test-macos:
+    name: Test on macOS
+    runs-on: macos-latest     # Free GitHub VM with macOS
+    
+    steps:
+      - name: Checkout dotfiles
+        uses: actions/checkout@v4
+      
+      - name: Validate ZSH syntax
+        run: |
+          echo "🔍 Checking ZSH files on macOS..."
+          zsh -n zsh/.zshrc
+          zsh -n zsh/.zprofile
+          echo "✅ ZSH syntax valid on macOS!"
+      
+      - name: Test OS detection
+        run: |
+          echo "🖥️  Testing OS detection on macOS..."
+          source zsh/.zshrc
+          if [ "$OS_TYPE" != "mac" ]; then
+            echo "❌ OS detection failed! Expected 'mac', got '$OS_TYPE'"
+            exit 1
+          fi
+          echo "✅ OS detected correctly as: $OS_TYPE"
+      
+      - name: Verify Brewfile
+        run: |
+          echo "🍺 Validating Brewfile..."
+          test -f Brewfile || { echo "❌ Brewfile missing!"; exit 1; }
+          echo "✅ Brewfile exists!"
