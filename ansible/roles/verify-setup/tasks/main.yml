@@ -1,0 +1,119 @@
+---
+# Verification Role
+# Validates the setup is complete and working
+
+- name: Verify HOME directory
+  assert:
+    that:
+      - ansible_env.HOME is defined
+      - ansible_env.HOME | length > 0
+    fail_msg: "HOME is not set"
+    success_msg: "✓ HOME: {{ ansible_env.HOME }}"
+
+- name: Check shell config symlinks
+  stat:
+    path: "{{ ansible_env.HOME }}/{{ item }}"
+  loop:
+    - .zshrc
+    - .zprofile
+    - .gitconfig
+  register: shell_configs_check
+
+- name: Verify shell configs exist
+  assert:
+    that:
+      - item.stat.exists
+    fail_msg: "Missing: {{ item.item }}"
+    success_msg: "✓ {{ item.item }}"
+  loop: "{{ shell_configs_check.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+- name: Check for broken symlinks (depth 1)
+  shell: find {{ ansible_env.HOME }} -maxdepth 1 -type l ! -exec test -e {} \; -print
+  register: broken_symlinks_1
+  changed_when: false
+  failed_when: false
+
+- name: Check for broken symlinks (depth 2)
+  shell: find {{ ansible_env.HOME }} -maxdepth 2 -type l ! -exec test -e {} \; -print
+  register: broken_symlinks_2
+  changed_when: false
+  failed_when: false
+
+- name: Report broken symlinks
+  debug:
+    msg: |
+      Broken symlinks found: {{ broken_symlinks_2.stdout_lines | length }}
+      {% if broken_symlinks_2.stdout_lines | length > 0 %}
+      {{ broken_symlinks_2.stdout_lines | join('\n') }}
+      {% endif %}
+
+- name: Check for legacy symlinks pointing to old paths
+  shell: |
+    find {{ ansible_env.HOME }} -maxdepth 1 -type l -exec sh -c '
+      target=$(readlink "$1")
+      if echo "$target" | grep -qE "mjb2|/Users/[^/]+$"; then
+        echo "$1 -> $target"
+      fi
+    ' _ {} \;
+  register: legacy_symlinks
+  changed_when: false
+  failed_when: false
+
+- name: Report legacy symlinks
+  debug:
+    msg: |
+      Legacy symlinks: {{ legacy_symlinks.stdout_lines | length }}
+      {% if legacy_symlinks.stdout_lines | length > 0 %}
+      {{ legacy_symlinks.stdout_lines | join('\n') }}
+      {% endif %}
+  when: legacy_symlinks.stdout_lines | length > 0
+
+- name: Verify Git configuration
+  shell: git config --get {{ item }}
+  loop:
+    - user.name
+    - user.email
+  register: git_config
+  changed_when: false
+  failed_when: false
+
+- name: Report Git configuration
+  debug:
+    msg: |
+      Git user.name: {{ git_config.results[0].stdout | default('NOT SET') }}
+      Git user.email: {{ git_config.results[1].stdout | default('NOT SET') }}
+
+- name: Check SSH agent (1Password)
+  shell: |
+    export SSH_AUTH_SOCK="${HOME}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+    ssh-add -l 2>/dev/null | wc -l
+  register: ssh_keys
+  changed_when: false
+  failed_when: false
+  when: ansible_os_family == "Darwin"
+
+- name: Report SSH agent status
+  debug:
+    msg: "SSH keys loaded: {{ ssh_keys.stdout | default('N/A') }}"
+  when: ansible_os_family == "Darwin"
+
+- name: Verification Summary
+  debug:
+    msg: |
+      ==========================================
+      Verification Complete for {{ ansible_hostname }}
+      ==========================================
+      
+      HOME: {{ ansible_env.HOME }}
+      Shell configs: ✓
+      Broken symlinks: {{ broken_symlinks_2.stdout_lines | length }}
+      Legacy symlinks: {{ legacy_symlinks.stdout_lines | length }}
+      Git configured: {{ 'Yes' if git_config.results[0].stdout else 'No' }}
+      
+      {% if broken_symlinks_2.stdout_lines | length > 0 or legacy_symlinks.stdout_lines | length > 0 %}
+      ⚠️  Issues found - review output above
+      {% else %}
+      ✓ All checks passed!
+      {% endif %}

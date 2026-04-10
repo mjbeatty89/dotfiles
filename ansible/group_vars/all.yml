@@ -1,0 +1,80 @@
+---
+# Global variables for all hosts
+
+# Git repository
+dotfiles_repo: "git@github.com:mjbeatty89/dotfiles.git"
+dotfiles_repo_https: "https://github.com/mjbeatty89/dotfiles.git"
+
+# User info
+user_name: "Matthew Beatty"
+user_email: "matt@beattyfamily.net"
+
+# Shell config files to symlink
+shell_configs:
+  - src: "dotfiles/zsh/.zshrc"
+    dest: ".zshrc"
+  - src: "dotfiles/zsh/.zprofile"
+    dest: ".zprofile"
+  - src: "dotfiles/git/.gitconfig"
+    dest: ".gitconfig"
+
+# Starship config
+starship_config:
+  src: "dotfiles/starship/starship.toml"
+  dest: ".config/starship.toml"
+
+# App configs in dotfiles2 to symlink
+app_configs:
+  - .1password
+  - .ai
+  - .aitk
+  - .auto-claude
+  - .azad
+  - .bun
+  - .bundle
+  - .claude
+  - .claude.json
+  - .codegpt
+  - .codex
+  - .composio
+  - .conda
+  - .continue
+  - .copilot
+  - .docker
+  - .dropbox
+  - .fontconfig
+  - .gemini
+  - .gnupg
+  - .idlerc
+  - .jules
+  - .junie
+  - .langflow
+  - .lazyssh
+  - .lmstudio
+  - .mem0
+  - .npm
+  - .opencode
+  - .pdf-filler-profiles
+  - .platformio
+  - .profile
+  - .ssh
+  - .swiftpm
+  - .tldrc
+  - .venv
+  - .vscode
+  - .vscode-R
+  - .warp
+  - .yarnrc
+
+# Rsync exclusions for home migration
+migration_excludes:
+  - '.Trash/'
+  - 'Library/Caches/'
+  - 'Library/Logs/'
+  - 'Library/CloudStorage/'
+  - 'Library/Containers/'
+  - 'Library/Group Containers/'
+  - 'node_modules/'
+  - '.cache/'
+  - '*.pyc'
+  - '__pycache__/'

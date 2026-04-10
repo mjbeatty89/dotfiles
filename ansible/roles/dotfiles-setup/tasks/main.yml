@@ -1,0 +1,83 @@
+---
+# Dotfiles Setup Role
+# Clones dotfiles repo and creates symlinks
+
+- name: Ensure .config directory exists
+  file:
+    path: "{{ ansible_env.HOME }}/.config"
+    state: directory
+    mode: '0755'
+
+- name: Check if dotfiles repo exists
+  stat:
+    path: "{{ ansible_env.HOME }}/dotfiles/.git"
+  register: dotfiles_git
+
+- name: Clone dotfiles repository (SSH)
+  git:
+    repo: "{{ dotfiles_repo }}"
+    dest: "{{ ansible_env.HOME }}/dotfiles"
+    accept_hostkey: yes
+  when: not dotfiles_git.stat.exists
+  ignore_errors: yes
+  register: git_ssh_clone
+
+- name: Clone dotfiles repository (HTTPS fallback)
+  git:
+    repo: "{{ dotfiles_repo_https }}"
+    dest: "{{ ansible_env.HOME }}/dotfiles"
+  when: 
+    - not dotfiles_git.stat.exists
+    - git_ssh_clone is failed
+
+- name: Create shell config symlinks
+  file:
+    src: "{{ ansible_env.HOME }}/{{ item.src }}"
+    dest: "{{ ansible_env.HOME }}/{{ item.dest }}"
+    state: link
+    force: yes
+  loop: "{{ shell_configs }}"
+
+- name: Create starship config symlink
+  file:
+    src: "{{ ansible_env.HOME }}/{{ starship_config.src }}"
+    dest: "{{ ansible_env.HOME }}/{{ starship_config.dest }}"
+    state: link
+    force: yes
+
+- name: Check which dotfiles2 app configs exist
+  stat:
+    path: "{{ ansible_env.HOME }}/dotfiles2/{{ item }}"
+  loop: "{{ app_configs }}"
+  register: app_config_check
+
+- name: Create dotfiles2 symlinks for existing configs
+  file:
+    src: "dotfiles2/{{ item.item }}"
+    dest: "{{ ansible_env.HOME }}/{{ item.item }}"
+    state: link
+    force: yes
+  loop: "{{ app_config_check.results }}"
+  when: item.stat.exists
+  loop_control:
+    label: "{{ item.item }}"
+
+- name: Create machine-specific config if not exists
+  copy:
+    dest: "{{ ansible_env.HOME }}/dotfiles/zsh/machines/{{ ansible_hostname }}.zsh"
+    content: |
+      # ============================================================================
+      # Machine-Specific Configuration: {{ ansible_hostname }}
+      # ============================================================================
+      # Add machine-specific settings here
+      # ============================================================================
+      
+      # Example: Set machine-specific paths
+      # export DEV_DIR="/path/to/dev"
+      
+    mode: '0644'
+    force: no  # Don't overwrite existing
+
+- name: Dotfiles setup complete
+  debug:
+    msg: "✓ Dotfiles configured for {{ ansible_hostname }}"

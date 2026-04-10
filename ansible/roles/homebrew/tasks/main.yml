@@ -1,0 +1,58 @@
+---
+# Homebrew Role
+# Installs and configures Homebrew on macOS
+
+- name: Check if Homebrew is installed
+  stat:
+    path: /opt/homebrew/bin/brew
+  register: homebrew_check
+  when: ansible_os_family == "Darwin"
+
+- name: Install Homebrew
+  shell: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  when: 
+    - ansible_os_family == "Darwin"
+    - not homebrew_check.stat.exists
+  environment:
+    NONINTERACTIVE: "1"
+
+- name: Update Homebrew
+  homebrew:
+    update_homebrew: yes
+  when: ansible_os_family == "Darwin"
+
+- name: Install essential CLI tools
+  homebrew:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - git
+    - starship
+    - eza
+    - bat
+    - fzf
+    - zoxide
+    - ripgrep
+    - fd
+    - jq
+    - gh
+    - thefuck
+  when: ansible_os_family == "Darwin"
+  ignore_errors: yes
+
+- name: Check if Brewfile exists
+  stat:
+    path: "{{ ansible_env.HOME }}/dotfiles/Brewfile"
+  register: brewfile_check
+
+- name: Install packages from Brewfile
+  shell: brew bundle install --file={{ ansible_env.HOME }}/dotfiles/Brewfile
+  when: 
+    - ansible_os_family == "Darwin"
+    - brewfile_check.stat.exists
+  ignore_errors: yes
+
+- name: Homebrew setup complete
+  debug:
+    msg: "✓ Homebrew configured"
+  when: ansible_os_family == "Darwin"

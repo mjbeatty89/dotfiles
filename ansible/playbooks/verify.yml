@@ -1,0 +1,21 @@
+---
+# Verification Playbook
+# Tests that the setup is complete and working
+#
+# Usage:
+#   ansible-playbook -i inventory/hosts.yml playbooks/verify.yml
+#
+# For a specific host:
+#   ansible-playbook -i inventory/hosts.yml playbooks/verify.yml --limit mmm4
+
+- name: Verify System Setup
+  hosts: all
+  gather_facts: yes
+  
+  pre_tasks:
+    - name: Starting verification
+      debug:
+        msg: "Verifying setup for {{ inventory_hostname }} ({{ ansible_os_family }})"
+  
+  roles:
+    - verify-setup

@@ -1,12 +1,16 @@
 ---
 # macOS Setup Playbook
-# Sets up external home directory and dotfiles symlinks
+# Complete setup for macOS machines with external home directory
 #
 # Usage:
 #   ansible-playbook -i inventory/hosts.yml playbooks/setup-macos.yml
 #
-# Or for a specific host:
+# For a specific host:
 #   ansible-playbook -i inventory/hosts.yml playbooks/setup-macos.yml --limit mmm4
+#
+# Skip certain roles:
+#   ansible-playbook ... --skip-tags homebrew
+#   ansible-playbook ... --skip-tags migration
 
 - name: Setup macOS with External Home
   hosts: macos
@@ -16,25 +20,42 @@
     - name: Display target info
       debug:
         msg: |
+          ==========================================
           Setting up: {{ inventory_hostname }}
-          External Home: {{ external_home }}
-          Old Home: {{ old_home }}
+          ==========================================
+          External Home: {{ external_home | default(ansible_env.HOME) }}
+          Old Home: {{ old_home | default('/Users/' + ansible_user_id) }}
+          OS: {{ ansible_os_family }} {{ ansible_distribution_version }}
   
   roles:
-    - macos-external-home
+    - role: homebrew
+      tags: [homebrew, packages]
+      
+    - role: macos-external-home
+      tags: [migration, home]
+      when: external_home is defined
+      
+    - role: dotfiles-setup
+      tags: [dotfiles, symlinks]
+      
+    - role: verify-setup
+      tags: [verify, test]
   
   post_tasks:
     - name: Final summary
       debug:
         msg: |
-          ========================================
-          Setup Complete for {{ inventory_hostname }}
-          ========================================
+          ==========================================
+          ✓ Setup Complete for {{ inventory_hostname }}
+          ==========================================
           
-          External Home: {{ external_home }}
-          Dotfiles: {{ external_home }}/dotfiles
+          Home: {{ ansible_env.HOME }}
+          Dotfiles: {{ ansible_env.HOME }}/dotfiles
           
           Next steps:
             1. Restart your shell: source ~/.zshrc
             2. Verify: git config user.name
             3. Test SSH: ssh -T git@github.com
+            
+          To re-run verification only:
+            ansible-playbook -i inventory/hosts.yml playbooks/verify.yml
