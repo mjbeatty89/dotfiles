@@ -205,6 +205,10 @@ dotfiles/
 ├── install.sh                       # Installation script
 ├── Brewfile                         # Homebrew packages
 ├── .gitignore                       # Excludes secrets
+├── ansible/                         # Ansible automation
+│   ├── inventory/hosts.yml          # Machine inventory
+│   ├── playbooks/setup-macos.yml    # macOS setup playbook
+│   └── roles/macos-external-home/   # External home role
 ├── docs/
 │   └── HOME_MIGRATION.md            # External home setup guide
 ├── zsh/
@@ -219,6 +223,21 @@ dotfiles/
 └── scripts/
     └── setup-external-home.sh       # External home migration script
 ```
+
+## 🤖 Ansible Automation
+
+Automated setup for machines using Ansible playbooks.
+
+```bash
+# Install Ansible
+brew install ansible
+
+# Run macOS setup
+cd ~/dotfiles/ansible
+ansible-playbook -i inventory/hosts.yml playbooks/setup-macos.yml
+```
+
+See [ansible/README.md](ansible/README.md) for full documentation.
 
 ## 💡 Useful Commands
 

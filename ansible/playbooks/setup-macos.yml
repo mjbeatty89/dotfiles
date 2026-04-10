@@ -1,0 +1,40 @@
+---
+# macOS Setup Playbook
+# Sets up external home directory and dotfiles symlinks
+#
+# Usage:
+#   ansible-playbook -i inventory/hosts.yml playbooks/setup-macos.yml
+#
+# Or for a specific host:
+#   ansible-playbook -i inventory/hosts.yml playbooks/setup-macos.yml --limit mmm4
+
+- name: Setup macOS with External Home
+  hosts: macos
+  gather_facts: yes
+  
+  pre_tasks:
+    - name: Display target info
+      debug:
+        msg: |
+          Setting up: {{ inventory_hostname }}
+          External Home: {{ external_home }}
+          Old Home: {{ old_home }}
+  
+  roles:
+    - macos-external-home
+  
+  post_tasks:
+    - name: Final summary
+      debug:
+        msg: |
+          ========================================
+          Setup Complete for {{ inventory_hostname }}
+          ========================================
+          
+          External Home: {{ external_home }}
+          Dotfiles: {{ external_home }}/dotfiles
+          
+          Next steps:
+            1. Restart your shell: source ~/.zshrc
+            2. Verify: git config user.name
+            3. Test SSH: ssh -T git@github.com

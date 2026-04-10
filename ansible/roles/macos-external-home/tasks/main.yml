@@ -1,0 +1,115 @@
+---
+# Tasks for macOS External Home Migration
+# Run with: ansible-playbook -i inventory/hosts.yml playbooks/setup-macos.yml
+
+- name: Include role variables
+  include_vars: main.yml
+
+- name: Verify external home directory exists
+  stat:
+    path: "{{ external_home }}"
+  register: ext_home_stat
+  failed_when: not ext_home_stat.stat.exists
+
+- name: Verify HOME is set to external home
+  assert:
+    that:
+      - ansible_env.HOME == external_home
+    fail_msg: "HOME ({{ ansible_env.HOME }}) doesn't match external_home ({{ external_home }}). Update System Settings first."
+    success_msg: "HOME correctly set to {{ external_home }}"
+
+# --- Data Migration (only if old home exists) ---
+- name: Check if old home exists
+  stat:
+    path: "{{ old_home }}"
+  register: old_home_stat
+
+- name: Migrate data from old home
+  synchronize:
+    src: "{{ old_home }}/"
+    dest: "{{ external_home }}/"
+    rsync_opts:
+      - "--exclude={{ item }}"
+  loop: "{{ rsync_excludes }}"
+  when: old_home_stat.stat.exists
+  ignore_errors: yes
+
+# --- Shell Config Symlinks ---
+- name: Ensure .config directory exists
+  file:
+    path: "{{ external_home }}/.config"
+    state: directory
+    mode: '0755'
+
+- name: Create shell config symlinks
+  file:
+    src: "{{ item.src }}"
+    dest: "{{ external_home }}/{{ item.dest }}"
+    state: link
+    force: yes
+  loop: "{{ shell_symlinks }}"
+
+# --- Dotfiles2 Symlinks ---
+- name: Check which dotfiles2 items exist
+  stat:
+    path: "{{ dotfiles2_dir }}/{{ item }}"
+  loop: "{{ dotfiles2_items }}"
+  register: dotfiles2_check
+
+- name: Create dotfiles2 symlinks
+  file:
+    src: "dotfiles2/{{ item.item }}"
+    dest: "{{ external_home }}/{{ item.item }}"
+    state: link
+    force: yes
+  loop: "{{ dotfiles2_check.results }}"
+  when: item.stat.exists
+  loop_control:
+    label: "{{ item.item }}"
+
+# --- Fix Legacy Symlinks ---
+- name: Find symlinks pointing to old paths
+  shell: |
+    find {{ external_home }} -maxdepth 1 -type l -exec sh -c '
+      target=$(readlink "$1")
+      if echo "$target" | grep -qE "mjb2|/Users/mjb"; then
+        echo "$1"
+      fi
+    ' _ {} \;
+  register: legacy_symlinks
+  changed_when: false
+
+- name: Report legacy symlinks found
+  debug:
+    msg: "Found {{ legacy_symlinks.stdout_lines | length }} symlinks pointing to old paths"
+  when: legacy_symlinks.stdout_lines | length > 0
+
+# --- Verify ---
+- name: Check for broken symlinks
+  shell: find {{ external_home }} -maxdepth 2 -type l ! -exec test -e {} \; -print
+  register: broken_symlinks
+  changed_when: false
+  failed_when: false
+
+- name: Report broken symlinks
+  debug:
+    msg: "Warning: {{ broken_symlinks.stdout_lines | length }} broken symlinks found"
+  when: broken_symlinks.stdout_lines | length > 0
+
+- name: Verify shell configs are accessible
+  stat:
+    path: "{{ external_home }}/{{ item }}"
+  loop:
+    - .zshrc
+    - .zprofile
+    - .gitconfig
+  register: shell_config_check
+  failed_when: not item.stat.exists
+
+- name: Migration complete
+  debug:
+    msg: |
+      ✓ External home setup complete!
+      Home: {{ external_home }}
+      Shell configs: symlinked to dotfiles/
+      App configs: symlinked to dotfiles2/

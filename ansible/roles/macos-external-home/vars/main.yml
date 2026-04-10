@@ -1,0 +1,48 @@
+---
+# Variables for macOS External Home Migration
+
+# Paths
+external_home: "{{ external_home | default('/Volumes/mm2ssd/mjb') }}"
+old_home: "{{ old_home | default('/Users/mjb') }}"
+dotfiles_dir: "{{ external_home }}/dotfiles"
+dotfiles2_dir: "{{ external_home }}/dotfiles2"
+
+# Rsync exclusions for migration
+rsync_excludes:
+  - '.Trash/'
+  - 'Library/Caches/'
+  - 'Library/Logs/'
+  - 'Library/CloudStorage/'
+  - 'Library/Containers/'
+  - 'Library/Group Containers/'
+  - 'node_modules/'
+  - '.cache/'
+  - '*.pyc'
+  - '__pycache__/'
+  - '.venv/'
+  - 'venv/'
+
+# Shell config symlinks (relative to home)
+shell_symlinks:
+  - src: "dotfiles/zsh/.zshrc"
+    dest: ".zshrc"
+  - src: "dotfiles/zsh/.zprofile"
+    dest: ".zprofile"
+  - src: "dotfiles/git/.gitconfig"
+    dest: ".gitconfig"
+  - src: "dotfiles/starship/starship.toml"
+    dest: ".config/starship.toml"
+
+# Dotfiles2 items to symlink (app configs)
+dotfiles2_items:
+  - .claude
+  - .ssh
+  - .docker
+  - .gnupg
+  - .1password
+  - .copilot
+  - .codex
+  - .warp
+  - .vscode
+  - .npm
+  - .bun
