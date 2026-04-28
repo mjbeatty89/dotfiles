@@ -6,7 +6,8 @@
 
 set -e  # Exit on error
 
-DOTFILES_DIR="$HOME/dotfiles"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$SCRIPT_DIR}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -72,13 +73,14 @@ else
     echo -e "${YELLOW}   You can create one at: $MACHINE_CONFIG${NC}"
 fi
 
-# Check for secrets file
-echo -e "\n${BLUE}Checking for secrets file...${NC}"
-if [ ! -f "$HOME/.zshrc.secrets" ]; then
-    echo -e "${YELLOW}⚠️  No .zshrc.secrets file found${NC}"
-    echo -e "${YELLOW}   Create one for API keys: touch ~/.zshrc.secrets && chmod 600 ~/.zshrc.secrets${NC}"
+# Check for 1Password env file
+echo -e "\n${BLUE}Checking for 1Password env file...${NC}"
+if [ ! -f "$HOME/.env.ai" ]; then
+    echo -e "${YELLOW}⚠️  No ~/.env.ai file found${NC}"
+    echo -e "${YELLOW}   Create it via 1Password Environments (or manually) for withai aliases${NC}"
+    echo -e "${YELLOW}   Recommended permissions: chmod 600 ~/.env.ai${NC}"
 else
-    echo -e "${GREEN}✓ Secrets file exists${NC}"
+    echo -e "${GREEN}✓ ~/.env.ai exists${NC}"
 fi
 
 echo -e "\n${BLUE}============================================================================${NC}"
@@ -86,5 +88,5 @@ echo -e "${GREEN}🚀 Dotfiles installed successfully!${NC}"
 echo -e "${BLUE}============================================================================${NC}\n"
 echo -e "${YELLOW}Next steps:${NC}"
 echo -e "  1. Restart your shell or run: ${BLUE}source ~/.zshrc${NC}"
-echo -e "  2. Add API keys to ${BLUE}~/.zshrc.secrets${NC} if needed"
+echo -e "  2. Ensure ${BLUE}~/.env.ai${NC} is available for withai aliases"
 echo -e "  3. Create machine-specific config if needed\n"

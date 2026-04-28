@@ -27,7 +27,7 @@ chmod +x install.sh
 ### After Installation
 
 1. Restart your shell or run: `source ~/.zshrc`
-2. Create `~/.zshrc.secrets` for API keys (see Secrets Management below)
+2. Ensure `~/.env.ai` exists for API-driven tooling (see Secrets Management below)
 3. Customize machine-specific settings if needed
 
 ## 📦 What's Included
@@ -59,15 +59,12 @@ chmod +x install.sh
 
 ## 🔒 Secrets Management
 
-API keys and secrets are stored separately in `~/.zshrc.secrets` which is:
-- ✅ Automatically loaded by `.zshrc`
-- ✅ Excluded from git (.gitignore)
-- ✅ Has secure permissions (chmod 600)
+API keys and secrets are managed via `~/.env.ai` and loaded on demand with the `withai` helper alias.
 
-**Create your secrets file:**
+**Create your env file:**
 ```bash
-touch ~/.zshrc.secrets
-chmod 600 ~/.zshrc.secrets
+touch ~/.env.ai
+chmod 600 ~/.env.ai
 ```
 
 **Add your API keys:**
@@ -75,6 +72,12 @@ chmod 600 ~/.zshrc.secrets
 export GEMINI_API_KEY="your-key-here"
 export OPENAI_API_KEY="your-key-here"
 # Add more as needed
+```
+
+**Use them with:**
+```bash
+withai gh auth status
+withai openai api models.list
 ```
 
 ## 🎯 Machine-Specific Configuration
